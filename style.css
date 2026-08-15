@@ -44,6 +44,16 @@ body {
   --br-ra-xl: 20px;
   --br-ra-2xl: 24px;
 }
+.btn {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--br-ra-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn:hover {
+  transform: scale(1.1);
+}
 body {
   background: var(--bg-color);
   color: var(--text-primary);
@@ -79,9 +89,30 @@ section .infos {
 .block {
   border: 1px solid var(--br-primary-color);
 }
-.fill{
+.fill {
   background-color: var(--snake-color);
 }
-.food{
+.food {
   background-color: var(--food-color);
+}
+.modal {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  background-color: #35353587;
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal .start-game,
+.modal .game-over {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+.modal .game-over{
+  display: none;
 }

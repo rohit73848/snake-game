@@ -1,4 +1,10 @@
 const board = document.querySelector(".board");
+const startButton = document.querySelector(".btn-start");
+const restartButton = document.querySelector(".btn-restart");
+const modal = document.querySelector(".modal");
+const startGameModal = document.querySelector(".start-game");
+const gameOverModal = document.querySelector(".game-over");
+
 const blockWidth = 50;
 const blockHeight = 50;
 
@@ -8,11 +14,7 @@ const rows = Math.floor(board.clientHeight / blockHeight);
 let direction = "down";
 
 const blocksArr = [];
-const snake = [
-  { x: 1, y: 3 },
-  { x: 1, y: 4 },
-  { x: 1, y: 5 },
-];
+let snake = [{ x: 1, y: 3 }];
 
 let food = {
   x: Math.floor(Math.random() * rows),
@@ -43,8 +45,10 @@ function render() {
   }
 
   if (head.x < 0 || head.x >= rows || head.y < 0 || head.y >= cols) {
-    alert("Game Over");
     clearInterval(IntervalId);
+    modal.style.display = "flex";
+    startGameModal.style.display = "none";
+    gameOverModal.style.display = "flex";
     return;
   }
   // Food Consume Logic
@@ -55,8 +59,8 @@ function render() {
       y: Math.floor(Math.random() * cols),
     };
     blocksArr[`${food.x} : ${food.y}`].classList.add("food");
-    snake.unshift(head)
-    return
+    snake.unshift(head);
+    return;
   }
 
   snake.forEach((segment) => {
@@ -69,10 +73,30 @@ function render() {
     blocksArr[`${segment.x} : ${segment.y}`].classList.add("fill");
   });
 }
-let IntervalId = null;
-IntervalId = setInterval(() => {
-  render();
-}, 500);
+startButton.addEventListener("click", () => {
+  modal.style.display = "none";
+  IntervalId = setInterval(() => {
+    render();
+  }, 400);
+});
+restartButton.addEventListener("click", restartGame);
+
+function restartGame() {
+  blocksArr[`${food.x} : ${food.y}`].classList.remove("food");
+snake.forEach((segment) => {
+    blocksArr[`${segment.x} : ${segment.y}`].classList.remove("fill");
+  });
+  direction = "down"
+  modal.style.display = "none";
+  snake = [{ x: 1, y: 3 }];
+  food = {
+    x: Math.floor(Math.random() * rows),
+    y: Math.floor(Math.random() * cols),
+  };
+  IntervalId = setInterval(() => {
+    render();
+  }, 400);
+}
 
 addEventListener("keydown", (event) => {
   console.log(event.key);
