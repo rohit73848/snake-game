@@ -79,3 +79,6 @@ section .infos {
 .block {
   border: 1px solid var(--br-primary-color);
 }
+.fill{
+  background-color: var(--snake-color);
+}
