@@ -80,14 +80,16 @@ section .infos {
   border: 1px solid var(--br-primary-color);
 }
 .board {
-  border: 1px solid var(--br-primary-color);
+  border: 5px solid var(--br-primary-color);
   flex-grow: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-  grid-template-rows: repeat(auto-fill, minmax(50px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(30px, 1fr));
+  padding: 5px;
 }
 .block {
   border: 1px solid var(--br-primary-color);
+  border-radius: 50%;
 }
 .fill {
   background-color: var(--snake-color);
