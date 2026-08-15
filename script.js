@@ -47,6 +47,18 @@ function render() {
     clearInterval(IntervalId);
     return;
   }
+  // Food Consume Logic
+  if (head.x == food.x && head.y == food.y) {
+    blocksArr[`${food.x} : ${food.y}`].classList.remove("food");
+    food = {
+      x: Math.floor(Math.random() * rows),
+      y: Math.floor(Math.random() * cols),
+    };
+    blocksArr[`${food.x} : ${food.y}`].classList.add("food");
+    snake.unshift(head)
+    return
+  }
+
   snake.forEach((segment) => {
     blocksArr[`${segment.x} : ${segment.y}`].classList.remove("fill");
   });
