@@ -2,57 +2,113 @@
 <html lang="en" data-theme="cyberpunk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Snake Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Landscape warning for mobile -->
+    <div class="landscape-notice" id="landscape-notice">
+        <div class="landscape-inner">
+            <span class="rotate-icon">📱</span>
+            <p>Rotate your device to portrait mode for the best experience.</p>
+        </div>
+    </div>
+
     <main>
         <section>
+            <!-- Info Bar -->
             <div class="infos">
                 <div class="info">
-                    <h3>High Score: <span id="high-score">0</span></h3>
+                    <h3><span class="label">Best</span><span id="high-score">0</span></h3>
                 </div>
                 <div class="info">
-                    <h3>Score: <span id="score">0</span></h3>
+                    <h3><span class="label">Score</span><span id="score">0</span></h3>
                 </div>
                 <div class="info">
-                    <h3>Level: <span id="level">1</span></h3>
+                    <h3><span class="label">Lvl</span><span id="level">1</span></h3>
                 </div>
                 <div class="info">
-                    <h3>Time: <span id="time">00:00</span></h3>
+                    <h3><span class="label">Time</span><span id="time">00:00</span></h3>
                 </div>
                 <div class="info theme-control">
                     <select id="theme-switcher">
-                        <option value="cyberpunk">🌐 Neon Cyberpunk</option>
-                        <option value="retro">👾 Classic Retro</option>
-                        <option value="light">☀️ Light Mode</option>
+                        <option value="cyberpunk">🌐 Cyberpunk</option>
+                        <option value="retro">👾 Retro</option>
+                        <option value="light">☀️ Light</option>
                     </select>
                 </div>
             </div>
 
-            <div class="board-wrapper">
+            <!-- Game Board -->
+            <div class="board-wrapper" id="board-wrapper">
                 <div class="pause-overlay" id="pause-overlay">
                     <span>⏸ PAUSED</span>
-                    <small>Press Space to resume</small>
+                    <small>Space · Tap ⏸ · Swipe to resume</small>
                 </div>
                 <div class="board"></div>
             </div>
+
+            <!-- Mobile D-Pad Controls -->
+            <div class="mobile-controls" id="mobile-controls">
+                <div class="dpad">
+                    <button class="dpad-btn dpad-up" id="btn-up" aria-label="Move Up" touch-action="manipulation">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="18 15 12 9 6 15"/>
+                        </svg>
+                    </button>
+                    <div class="dpad-middle">
+                        <button class="dpad-btn dpad-left" id="btn-left" aria-label="Move Left">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"/>
+                            </svg>
+                        </button>
+                        <button class="dpad-btn dpad-center" id="btn-pause" aria-label="Pause or Resume">
+                            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="4" width="4" height="16" rx="1"/>
+                                <rect x="14" y="4" width="4" height="16" rx="1"/>
+                            </svg>
+                            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="6 3 20 12 6 21 6 3"/>
+                            </svg>
+                        </button>
+                        <button class="dpad-btn dpad-right" id="btn-right" aria-label="Move Right">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="dpad-btn dpad-down" id="btn-down" aria-label="Move Down">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </section>
 
-        <div class="modal">
-            <div class="start-game">
+        <!-- Modal (Start & Game Over) -->
+        <div class="modal" id="modal">
+            <div class="start-game" id="start-modal">
+                <div class="modal-icon">🐍</div>
                 <h3>Snake Game</h3>
-                <p>Use arrow keys to move<br>Space to pause · Every 50pts = Level Up</p>
-                <button class="btn btn-start">Start Game</button>
+                <p class="modal-hint desktop-hint">Arrow keys to move · Space to pause</p>
+                <p class="modal-hint mobile-hint">Swipe or use D-pad · Tap ⏸ to pause</p>
+                <p class="modal-hint">Every 50 pts → Level Up + Obstacles!</p>
+                <button class="btn btn-start" id="start-btn">▶ Start Game</button>
             </div>
-            <div class="game-over">
+            <div class="game-over" id="game-over-modal">
+                <div class="modal-icon">💀</div>
                 <h3>Game Over</h3>
                 <p id="final-score-text">Score: 0</p>
-                <button class="btn btn-restart">Restart Game</button>
+                <button class="btn btn-restart" id="restart-btn">↺ Play Again</button>
             </div>
         </div>
     </main>
+
     <script src="script.js"></script>
 </body>
 </html>

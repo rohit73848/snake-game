@@ -1,19 +1,31 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 
-* {
+/* ================================
+   RESET & GLOBAL
+   ================================ */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
+
 html,
 body {
-  height: 100%;
   width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none; /* Prevents pull-to-refresh on mobile */
+  touch-action: none;        /* Prevents browser handling of touch gestures */
 }
 
 /* ================================
-   DESIGN TOKENS (Default Fallback)
+   DESIGN TOKENS (Shared)
    ================================ */
 :root {
   --space-xs: 4px;
@@ -33,7 +45,7 @@ body {
 }
 
 /* ================================
-   THEME: Neon Cyberpunk (Default)
+   THEME: Neon Cyberpunk
    ================================ */
 [data-theme="cyberpunk"] {
   --bg-color: #0d0d1a;
@@ -46,6 +58,8 @@ body {
   --obstacle-color: #ff6b00;
   --br-primary-color: #2d2d5e;
   --modal-bg: #0f0f2a;
+  --dpad-bg: rgba(255, 255, 255, 0.04);
+  --dpad-active-bg: rgba(0, 245, 255, 0.12);
 }
 
 /* ================================
@@ -62,6 +76,8 @@ body {
   --obstacle-color: #ff9900;
   --br-primary-color: #1a4d1a;
   --modal-bg: #080808;
+  --dpad-bg: rgba(51, 255, 51, 0.05);
+  --dpad-active-bg: rgba(255, 255, 0, 0.15);
 }
 
 /* ================================
@@ -78,6 +94,8 @@ body {
   --obstacle-color: #dd6b20;
   --br-primary-color: #cbd5e0;
   --modal-bg: #edf2f7;
+  --dpad-bg: rgba(0, 0, 0, 0.05);
+  --dpad-active-bg: rgba(43, 108, 176, 0.12);
 }
 
 /* ================================
@@ -88,43 +106,59 @@ body {
   color: var(--text-primary);
   transition: background 0.4s ease, color 0.4s ease;
 }
-main,
-section {
+
+main {
   width: 100%;
   height: 100%;
+  position: relative;
 }
+
 section {
-  padding: var(--space-2xl);
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
-  gap: var(--space-lg);
+  padding: var(--space-2xl);
+  gap: var(--space-md);
 }
 
 /* ================================
    INFO BAR
    ================================ */
-section .infos {
-  width: 100%;
+.infos {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
+  flex-shrink: 0;
 }
+
 .info {
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--br-primary-color);
   border-radius: var(--br-ra-sm);
   transition: border-color 0.4s ease, background 0.4s ease;
+  white-space: nowrap;
 }
+
 .info h3 {
   font-size: 0.8rem;
   font-weight: 500;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.info h3 span {
+
+.info .label {
+  color: var(--text-primary);
+  opacity: 0.55;
+  font-weight: 400;
+  font-size: 0.72rem;
+}
+
+.info h3 span:not(.label) {
   color: var(--text-accent);
   font-weight: 700;
   transition: color 0.4s ease;
@@ -136,6 +170,7 @@ section .infos {
 .theme-control {
   padding: var(--space-xs) var(--space-sm);
 }
+
 #theme-switcher {
   background: transparent;
   border: none;
@@ -145,55 +180,67 @@ section .infos {
   cursor: pointer;
   outline: none;
   transition: color 0.4s ease;
+  touch-action: manipulation;
 }
+
 #theme-switcher option {
   background: var(--bg-color);
   color: var(--text-primary);
 }
 
 /* ================================
-   BOARD WRAPPER & PAUSE OVERLAY
+   BOARD WRAPPER & BOARD
    ================================ */
 .board-wrapper {
   flex-grow: 1;
+  min-height: 0;   /* Critical: allows flex child to shrink below content size */
   position: relative;
-  min-height: 0;
+  overflow: hidden;
 }
+
 .board {
-  border: 3px solid var(--br-primary-color);
   width: 100%;
   height: 100%;
+  border: 3px solid var(--br-primary-color);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
   grid-template-rows: repeat(auto-fill, minmax(30px, 1fr));
-  padding: 5px;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  padding: 4px;
+  transition: border-color 0.4s ease;
+  touch-action: none; /* Capture all touch on the board */
 }
+
+/* ================================
+   PAUSE OVERLAY
+   ================================ */
 .pause-overlay {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: var(--space-sm);
   z-index: 5;
-  border-radius: 2px;
 }
+
 .pause-overlay.active {
   display: flex;
 }
+
 .pause-overlay span {
-  font-size: 2rem;
+  font-size: clamp(1.4rem, 4vw, 2rem);
   font-weight: 700;
   color: var(--text-accent);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
 .pause-overlay small {
-  font-size: 0.82rem;
+  font-size: clamp(0.7rem, 2vw, 0.85rem);
   color: var(--text-primary);
   opacity: 0.65;
 }
@@ -204,25 +251,22 @@ section .infos {
 .block {
   border: 1px solid var(--br-primary-color);
   border-radius: 50%;
-  transition: background-color 0.08s ease, border-color 0.4s ease;
+  transition: border-color 0.4s ease;
 }
 
-/* Snake body */
 .fill {
   background-color: var(--snake-color);
   border-radius: 30%;
   box-shadow: 0 0 4px var(--snake-color);
-  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+  transition: background-color 0.4s ease;
 }
 
-/* Snake head — overrides fill */
 .snake-head {
   background-color: var(--snake-head-color) !important;
   border-radius: 40% !important;
   box-shadow: 0 0 10px var(--snake-head-color) !important;
 }
 
-/* Food with pulsing animation */
 .food {
   background-color: var(--food-color);
   border-radius: 50%;
@@ -230,7 +274,6 @@ section .infos {
   animation: pulse 0.65s ease-in-out infinite alternate;
 }
 
-/* Obstacle */
 .obstacle {
   background-color: var(--obstacle-color);
   border-radius: 20%;
@@ -238,35 +281,86 @@ section .infos {
 }
 
 /* ================================
-   ANIMATIONS
+   MOBILE CONTROLS (D-PAD)
    ================================ */
-@keyframes pulse {
-  from {
-    transform: scale(0.75);
-    opacity: 0.8;
-  }
-  to {
-    transform: scale(1.1);
-    opacity: 1;
-  }
+.mobile-controls {
+  display: none;  /* Hidden by default (desktop) */
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  flex-shrink: 0;
 }
 
-@keyframes levelFlash {
-  0%   { box-shadow: inset 0 0 0 3px var(--text-accent); }
-  50%  { box-shadow: inset 0 0 0 8px var(--text-accent); }
-  100% { box-shadow: inset 0 0 0 0 transparent; }
-}
-.board.level-up {
-  animation: levelFlash 0.6s ease forwards;
+.dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.92) translateY(12px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+.dpad-middle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.dpad-btn {
+  width: 64px;
+  height: 64px;
+  background: var(--dpad-bg);
+  border: 1.5px solid var(--br-primary-color);
+  border-radius: var(--br-ra-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, background-color 0.15s ease, border-color 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dpad-btn svg {
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.dpad-btn:active {
+  transform: scale(0.84);
+  background: var(--dpad-active-bg);
+  border-color: var(--text-accent);
+}
+
+/* Center pause button — circular */
+.dpad-center {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border-color: var(--text-accent);
+  color: var(--text-accent);
+  background: color-mix(in srgb, var(--text-accent) 12%, transparent);
+}
+
+.dpad-center svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* D-pad pause/play icon toggle */
+.dpad-center .icon-play {
+  display: none;
+}
+.dpad-center.is-paused .icon-pause {
+  display: none;
+}
+.dpad-center.is-paused .icon-play {
+  display: block;
 }
 
 /* ================================
-   BUTTONS
+   BUTTONS (Modal)
    ================================ */
 .btn {
   padding: var(--space-sm) var(--space-xl);
@@ -277,68 +371,266 @@ section .infos {
   font-weight: 600;
   font-size: 0.9rem;
   letter-spacing: 0.04em;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  touch-action: manipulation;
 }
+
 .btn:hover {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.95);
 }
+
 .btn-start {
   background: var(--text-accent);
   color: var(--bg-color);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--text-accent) 40%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--text-accent) 45%, transparent);
 }
+
 .btn-restart {
   background: var(--food-color);
   color: #fff;
-  box-shadow: 0 0 16px color-mix(in srgb, var(--food-color) 40%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--food-color) 45%, transparent);
 }
 
 /* ================================
    MODAL
    ================================ */
 .modal {
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   position: fixed;
-  top: 0;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10;
+  padding: var(--space-md);
 }
+
 .modal .start-game,
 .modal .game-over {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   background: var(--modal-bg, var(--board-bg));
   border: 1px solid var(--br-primary-color);
   border-radius: var(--br-ra-xl);
   padding: var(--space-3xl) var(--space-2xl);
-  min-width: 300px;
+  width: 100%;
+  max-width: 340px;
   text-align: center;
-  animation: modalIn 0.3s ease;
+  animation: modalIn 0.28s ease;
   transition: background 0.4s ease, border-color 0.4s ease;
 }
+
+.modal-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
 .modal .start-game h3,
 .modal .game-over h3 {
-  font-size: 1.6rem;
+  font-size: clamp(1.3rem, 4vw, 1.6rem);
   font-weight: 700;
   color: var(--text-accent);
   letter-spacing: 0.05em;
 }
-.modal .start-game p,
-.modal .game-over p {
-  font-size: 0.82rem;
+
+.modal-hint {
+  font-size: 0.78rem;
   line-height: 1.7;
-  opacity: 0.65;
+  opacity: 0.6;
 }
+
+.modal .game-over > p {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
 .modal .game-over {
   display: none;
+}
+
+/* Show/hide modal hints based on device */
+.mobile-hint  { display: none; }
+.desktop-hint { display: block; }
+
+/* ================================
+   LANDSCAPE NOTICE (Mobile)
+   ================================ */
+.landscape-notice {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-color, #0d0d1a);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.landscape-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--text-primary, #dde1ff);
+}
+
+.rotate-icon {
+  font-size: 3rem;
+  animation: rotateHint 2s ease-in-out infinite;
+}
+
+.landscape-inner p {
+  font-size: 1rem;
+  opacity: 0.75;
+  max-width: 260px;
+  line-height: 1.6;
+}
+
+/* ================================
+   ANIMATIONS
+   ================================ */
+@keyframes pulse {
+  from { transform: scale(0.75); opacity: 0.8; }
+  to   { transform: scale(1.1);  opacity: 1;   }
+}
+
+@keyframes levelFlash {
+  0%   { box-shadow: inset 0 0 0 3px var(--text-accent); }
+  50%  { box-shadow: inset 0 0 0 8px var(--text-accent); }
+  100% { box-shadow: inset 0 0 0 0 transparent; }
+}
+
+.board.level-up {
+  animation: levelFlash 0.6s ease forwards;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.92) translateY(14px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes rotateHint {
+  0%, 100% { transform: rotate(0deg);   }
+  40%       { transform: rotate(90deg);  }
+  60%       { transform: rotate(90deg);  }
+}
+
+/* ================================
+   RESPONSIVE — TABLET (≤ 900px)
+   ================================ */
+@media (max-width: 900px) {
+  section {
+    padding: var(--space-lg);
+    gap: var(--space-sm);
+  }
+}
+
+/* ================================
+   RESPONSIVE — MOBILE (≤ 600px)
+   ================================ */
+@media (max-width: 600px) {
+  section {
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-xs);
+  }
+
+  .infos {
+    gap: 4px;
+  }
+
+  .info {
+    padding: 5px 10px;
+  }
+
+  .info h3 {
+    font-size: 0.7rem;
+    gap: 4px;
+  }
+
+  .info .label {
+    font-size: 0.62rem;
+  }
+
+  .board {
+    border-width: 2px;
+    padding: 3px;
+    grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+    grid-template-rows: repeat(auto-fill, minmax(28px, 1fr));
+  }
+
+  /* Show mobile D-pad on small screens */
+  .mobile-controls {
+    display: flex;
+    padding: var(--space-xs) 0;
+  }
+
+  .dpad-btn {
+    width: 58px;
+    height: 58px;
+  }
+
+  .dpad-center {
+    width: 50px;
+    height: 50px;
+  }
+
+  /* Show mobile hints in modal, hide desktop */
+  .mobile-hint  { display: block; }
+  .desktop-hint { display: none;  }
+}
+
+/* ================================
+   RESPONSIVE — VERY SMALL (≤ 380px)
+   ================================ */
+@media (max-width: 380px) {
+  .dpad-btn {
+    width: 52px;
+    height: 52px;
+  }
+
+  .dpad-center {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dpad-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .modal .start-game,
+  .modal .game-over {
+    padding: var(--space-xl) var(--space-lg);
+    gap: var(--space-sm);
+  }
+}
+
+/* ================================
+   TOUCH DEVICE — D-PAD (any size)
+   Shows D-pad on tablets and touch desktops too
+   ================================ */
+.is-touch .mobile-controls {
+  display: flex;
+}
+
+.is-touch .mobile-hint  { display: block; }
+.is-touch .desktop-hint { display: none;  }
+
+/* ================================
+   LANDSCAPE MOBILE (≤ 600px)
+   ================================ */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .landscape-notice {
+    display: flex;
+  }
 }
