@@ -459,11 +459,23 @@ function setDpadDirection(newDir, opposite) {
   }
 }
 
-document.getElementById("btn-up").addEventListener("click",    () => setDpadDirection("up",    "down"));
-document.getElementById("btn-down").addEventListener("click",  () => setDpadDirection("down",  "up"));
-document.getElementById("btn-left").addEventListener("click",  () => setDpadDirection("left",  "right"));
-document.getElementById("btn-right").addEventListener("click", () => setDpadDirection("right", "left"));
-btnPause.addEventListener("click", togglePause);
+// Bug Fix 8b: bind via both "click" (mouse/desktop) and "touchstart"
+// (mobile) so direction changes register instantly and reliably even
+// if a browser's synthesized click is delayed or dropped. preventDefault
+// on touchstart stops the follow-up ghost click from double-firing.
+function bindTap(el, handler) {
+  el.addEventListener("click", handler);
+  el.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    handler();
+  }, { passive: false });
+}
+
+bindTap(document.getElementById("btn-up"),    () => setDpadDirection("up",    "down"));
+bindTap(document.getElementById("btn-down"),  () => setDpadDirection("down",  "up"));
+bindTap(document.getElementById("btn-left"),  () => setDpadDirection("left",  "right"));
+bindTap(document.getElementById("btn-right"), () => setDpadDirection("right", "left"));
+bindTap(btnPause, togglePause);
 
 // ================================
 // Swipe Gesture Controls (Mobile)

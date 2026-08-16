@@ -21,7 +21,11 @@ body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none; /* Prevents pull-to-refresh on mobile */
-  touch-action: none;        /* Prevents browser handling of touch gestures */
+  /* Bug Fix 8: touch-action:none here used to cascade down to ALL
+     descendants (including the D-pad buttons), overriding their own
+     "touch-action: manipulation" and silently suppressing the click
+     event on mobile. Moved this restriction to #board-wrapper only,
+     where swipe gestures actually need it. */
 }
 
 /* ================================
@@ -196,6 +200,7 @@ section {
   min-height: 0;   /* Critical: allows flex child to shrink below content size */
   position: relative;
   overflow: hidden;
+  touch-action: none; /* Bug Fix 8: scoped here (swipe area) instead of html/body */
 }
 
 .board {
