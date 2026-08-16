@@ -208,8 +208,12 @@ section {
   height: 100%;
   border: 3px solid var(--br-primary-color);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-  grid-template-rows: repeat(auto-fill, minmax(30px, 1fr));
+  /* Bug Fix 9: grid-template-columns/rows are now set directly by JS
+     (inline style) to an EXACT track count matching the number of
+     block divs created. The old "repeat(auto-fill, minmax(30px, 1fr))"
+     let the browser decide the column/row count independently of JS's
+     count — any tiny mismatch (rounding, late font-load reflow) left
+     a whole extra empty track with no blocks in it. */
   padding: 4px;
   transition: border-color 0.4s ease;
   touch-action: none; /* Capture all touch on the board */

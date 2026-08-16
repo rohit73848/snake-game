@@ -86,6 +86,10 @@ let obstacles = [];
 function buildGrid() {
   board.innerHTML = "";
   blocksArr = {};
+  // Bug Fix 9: declare the EXACT number of tracks so CSS Grid can never
+  // create more (or fewer) columns/rows than we have block divs for.
+  board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  board.style.gridTemplateRows    = `repeat(${rows}, 1fr)`;
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const block = document.createElement("div");
@@ -385,14 +389,15 @@ function restartGame() {
 // ================================
 // Resize / Orientation Handling
 // ================================
-// Bug Fix 7: cols/rows were only ever computed once at script load, before
-// fonts/layout had settled (especially on mobile). Any later resize,
-// rotation, or browser-chrome show/hide left the grid out of sync with
-// the actual rendered board size. We rebuild the grid on resize, but only
-// when the game isn't actively running (to avoid disrupting play), and we
-// always rebuild before a fresh game starts via restartGame().
+// Bug Fix 7 + 9: cols/rows were only ever computed once at script load,
+// before fonts/layout had fully settled (especially on mobile). Any
+// later resize, rotation, or reflow (e.g. Google Fonts loading async
+// and changing the info-bar's height) left the grid out of sync with
+// the actual rendered board size. ResizeObserver catches ALL of these
+// — not just window resize — because it fires whenever board-wrapper's
+// own box size changes, for any reason.
 let resizeTimeout;
-window.addEventListener("resize", () => {
+const resizeObserver = new ResizeObserver(() => {
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
     const dims = getBoardDimensions();
@@ -406,11 +411,12 @@ window.addEventListener("resize", () => {
       buildGrid();
       food = generateFood();
     }
-    // If a game is running, the new grid size will be applied next
+    // If a game is running, the new grid size is applied on the next
     // restartGame() call to avoid yanking the board out from under the
     // player mid-move.
   }, 150);
 });
+resizeObserver.observe(boardWrapper);
 
 // ================================
 // Theme Switcher
@@ -459,23 +465,11 @@ function setDpadDirection(newDir, opposite) {
   }
 }
 
-// Bug Fix 8b: bind via both "click" (mouse/desktop) and "touchstart"
-// (mobile) so direction changes register instantly and reliably even
-// if a browser's synthesized click is delayed or dropped. preventDefault
-// on touchstart stops the follow-up ghost click from double-firing.
-function bindTap(el, handler) {
-  el.addEventListener("click", handler);
-  el.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    handler();
-  }, { passive: false });
-}
-
-bindTap(document.getElementById("btn-up"),    () => setDpadDirection("up",    "down"));
-bindTap(document.getElementById("btn-down"),  () => setDpadDirection("down",  "up"));
-bindTap(document.getElementById("btn-left"),  () => setDpadDirection("left",  "right"));
-bindTap(document.getElementById("btn-right"), () => setDpadDirection("right", "left"));
-bindTap(btnPause, togglePause);
+document.getElementById("btn-up").addEventListener("click",    () => setDpadDirection("up",    "down"));
+document.getElementById("btn-down").addEventListener("click",  () => setDpadDirection("down",  "up"));
+document.getElementById("btn-left").addEventListener("click",  () => setDpadDirection("left",  "right"));
+document.getElementById("btn-right").addEventListener("click", () => setDpadDirection("right", "left"));
+btnPause.addEventListener("click", togglePause);
 
 // ================================
 // Swipe Gesture Controls (Mobile)
