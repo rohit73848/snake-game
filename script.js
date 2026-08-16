@@ -29,8 +29,30 @@ if (isTouchDevice) {
 // ================================
 const blockSize = 30;
 
-const cols = Math.floor(board.clientWidth  / blockSize);
-const rows = Math.floor(board.clientHeight / blockSize);
+// Bug Fix 5: cols/rows must account for the board's own padding + border,
+// otherwise JS thinks there are more/fewer cells than CSS Grid actually
+// creates (auto-fill sizes off the *content* box, not clientWidth/Height).
+function getBoardDimensions() {
+  const styles = getComputedStyle(board);
+  const paddingX =
+    parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+  const paddingY =
+    parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+  const borderX =
+    parseFloat(styles.borderLeftWidth) + parseFloat(styles.borderRightWidth);
+  const borderY =
+    parseFloat(styles.borderTopWidth) + parseFloat(styles.borderBottomWidth);
+
+  const innerWidth  = board.clientWidth  - paddingX - borderX;
+  const innerHeight = board.clientHeight - paddingY - borderY;
+
+  return {
+    cols: Math.max(1, Math.floor(innerWidth  / blockSize)),
+    rows: Math.max(1, Math.floor(innerHeight / blockSize)),
+  };
+}
+
+let { cols, rows } = getBoardDimensions();
 
 // ================================
 // Game State
@@ -56,19 +78,24 @@ highScoreElement.innerText = highScore;
 // ================================
 // Board Grid & Game Objects
 // ================================
-const blocksArr = [];
+let blocksArr = {};
 let snake     = [{ x: 1, y: 3 }];
 let obstacles = [];
 
 // Build the grid
-for (let row = 0; row < rows; row++) {
-  for (let col = 0; col < cols; col++) {
-    const block = document.createElement("div");
-    block.classList.add("block");
-    board.appendChild(block);
-    blocksArr[`${row} : ${col}`] = block;
+function buildGrid() {
+  board.innerHTML = "";
+  blocksArr = {};
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const block = document.createElement("div");
+      block.classList.add("block");
+      board.appendChild(block);
+      blocksArr[`${row} : ${col}`] = block;
+    }
   }
 }
+buildGrid();
 
 // ================================
 // Helper: Format timer display
@@ -113,16 +140,21 @@ let food = generateFood();
 function generateObstacles(count) {
   for (let i = 0; i < count; i++) {
     let obs;
+    let attempts = 0;
+    const maxAttempts = rows * cols; // avoid infinite loop on a nearly-full board
     do {
       obs = {
         x: Math.floor(Math.random() * rows),
         y: Math.floor(Math.random() * cols),
       };
+      attempts++;
     } while (
-      snake.some((seg) => seg.x === obs.x && seg.y === obs.y) ||
-      obstacles.some((o)   => o.x   === obs.x && o.y   === obs.y) ||
-      (obs.x === food.x && obs.y === food.y)
+      attempts < maxAttempts &&
+      (snake.some((seg) => seg.x === obs.x && seg.y === obs.y) ||
+        obstacles.some((o) => o.x === obs.x && o.y === obs.y) ||
+        (obs.x === food.x && obs.y === food.y))
     );
+    if (attempts >= maxAttempts) return; // board too full, stop adding
     obstacles.push(obs);
     blocksArr[`${obs.x} : ${obs.y}`].classList.add("obstacle");
   }
@@ -192,8 +224,14 @@ function render() {
     return;
   }
 
-  // Bug Fix 1: Self-collision check
-  if (snake.some((seg) => seg.x === head.x && seg.y === head.y)) {
+  const ateFood = head.x === food.x && head.y === food.y;
+
+  // Bug Fix 6: Self-collision must ignore the tail cell when the snake
+  // ISN'T growing this tick, because that cell is about to become empty
+  // (snake.pop() below). Checking against the full array caused random
+  // false "game over"s when moving into the current tail position.
+  const bodyToCheck = ateFood ? snake : snake.slice(0, -1);
+  if (bodyToCheck.some((seg) => seg.x === head.x && seg.y === head.y)) {
     gameOver();
     return;
   }
@@ -203,8 +241,6 @@ function render() {
     gameOver();
     return;
   }
-
-  const ateFood = head.x === food.x && head.y === food.y;
 
   // Remove previous head highlight before moving
   blocksArr[`${snake[0].x} : ${snake[0].y}`].classList.remove("snake-head");
@@ -309,14 +345,12 @@ document.getElementById("start-btn").addEventListener("click", () => {
 document.getElementById("restart-btn").addEventListener("click", restartGame);
 
 function restartGame() {
-  // Clear all visual states from board
-  blocksArr[`${food.x} : ${food.y}`].classList.remove("food");
-  snake.forEach((seg) => {
-    blocksArr[`${seg.x} : ${seg.y}`].classList.remove("fill", "snake-head");
-  });
-  obstacles.forEach((obs) => {
-    blocksArr[`${obs.x} : ${obs.y}`].classList.remove("obstacle");
-  });
+  // Recompute grid in case the viewport changed since the last game
+  // (e.g. orientation flip, browser chrome show/hide, font reflow).
+  const dims = getBoardDimensions();
+  cols = dims.cols;
+  rows = dims.rows;
+  buildGrid();
 
   // Reset all state
   score     = 0;
@@ -347,6 +381,36 @@ function restartGame() {
   IntervalId = setInterval(render, getSpeed());
   startTimer();
 }
+
+// ================================
+// Resize / Orientation Handling
+// ================================
+// Bug Fix 7: cols/rows were only ever computed once at script load, before
+// fonts/layout had settled (especially on mobile). Any later resize,
+// rotation, or browser-chrome show/hide left the grid out of sync with
+// the actual rendered board size. We rebuild the grid on resize, but only
+// when the game isn't actively running (to avoid disrupting play), and we
+// always rebuild before a fresh game starts via restartGame().
+let resizeTimeout;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    const dims = getBoardDimensions();
+    if (dims.cols === cols && dims.rows === rows) return; // nothing changed
+
+    cols = dims.cols;
+    rows = dims.rows;
+
+    if (!isRunning) {
+      // Safe to rebuild immediately (e.g. still on the start screen)
+      buildGrid();
+      food = generateFood();
+    }
+    // If a game is running, the new grid size will be applied next
+    // restartGame() call to avoid yanking the board out from under the
+    // player mid-move.
+  }, 150);
+});
 
 // ================================
 // Theme Switcher
